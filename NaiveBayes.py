@@ -1,6 +1,7 @@
 from nltk.tokenize import word_tokenize
 import readData as rd
 import numpy as np
+import math
 
 
 class NaiveBayes(object):
@@ -57,16 +58,25 @@ class NaiveBayes(object):
         p_pos *= self.PA_pos
         p_neg *= self.PA_neg
 
-        print('Tweet:', tweet, '====> pos/neg: ', p_pos/p_neg, '\t--->', (p_pos >= p_neg))
-        if p_pos >= p_neg:
+        #print('Tweet:', tweet, '====> pos/neg: ', p_pos/p_neg, '\t--->', (p_pos >= p_neg))
+
+        pn_ratio = (p_pos) / (p_neg)
+
+        if pn_ratio > 1.4:
+            print('Tweet:', tweet, '====> ', pn_ratio, ' ====> 4')
             return 4
+        elif pn_ratio > 0.55:
+            print('Tweet:', tweet, '====> ', pn_ratio, ' ====> 2')
+            return 2
         else:
+            print('Tweet:', tweet, '====> ', pn_ratio, ' ====> 0')
             return 0
 
 # ========================================================================================
 
     def predict(self, test_data):
         result = dict()
+
 
         for (i, tweet) in enumerate(test_data):
             result[i] = int(self.classify(tweet))
@@ -107,12 +117,53 @@ def metrics(labels, predictions):
     print("F-score: ", fscore)
     print("Accuracy: ", accuracy)
 
+def metrics2(labels, predictions):
+    true = 0
+    false = 0
+
+    true_pos = 0
+    true_ntr = 0
+    true_neg = 0
+    false_pos = 0
+    false_ntr = 0
+    false_neg = 0
+
+    for i in range(len(labels)):
+        if labels[i] == predictions[i]:
+            if labels[i] == 4:
+                true_pos += 1
+            elif labels[i] == 2:
+                true_ntr += 1
+            else:
+                true_neg += 1
+        else:
+            if labels[i] == 4:
+                false_pos += 1
+            elif labels[i] == 2:
+                false_ntr += 1
+            else:
+                false_neg += 1
+
+    true = true_pos + true_ntr + true_neg
+    false = false_neg + false_pos + false_ntr
+
+    accuracy = true / (true + false)
 
 
-filename = 'train.csv'
+    print('Accuracy : ', accuracy)
+    print('Pos Accuracy : ', true_pos / (true_pos + false_pos))
+    print('Ntr Accuracy : ', true_ntr / (true_ntr + false_ntr))
+    print('Neg Accuracy : ', true_neg / (true_neg + false_neg))
+    print('Total pos : ', true_pos + false_pos)
+    print('Total ntr : ', true_ntr + false_ntr)
+    print('Total neg : ', true_neg + false_neg)
+
+filename = 'train60k.csv'
 
 data = rd.read_and_clean_data(filename)
+test_data = rd.read_and_clean_data('test2.csv')
 
+"""
 total_tweets = data.shape[0]
 trainIndex, testIndex = list(), list()
 for i in range(total_tweets):
@@ -128,11 +179,11 @@ trainData.drop(['index'], axis=1, inplace=True)
 
 testData.reset_index(inplace=True)
 testData.drop(['index'], axis=1, inplace=True)
+"""
 
-
-naive_data = NaiveBayes(trainData)
+naive_data = NaiveBayes(data)
 naive_data.train()
-preds = naive_data.predict(testData['tweet'])
-#print(testData['Sentiment'])
-#print(preds)
-metrics(testData['Sentiment'], preds)
+preds = naive_data.predict(test_data['tweet'])
+print(test_data['Sentiment'])
+print(preds)
+metrics2(test_data['Sentiment'], preds)
