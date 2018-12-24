@@ -1,4 +1,4 @@
-mmmimport readData as rd
+import readData as rd
 from sklearn.feature_extraction.text import CountVectorizer
 
 data = rd.read_and_clean_data('train_short.csv')
