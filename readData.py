@@ -1,4 +1,5 @@
 import pandas as pd
+import re
 
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
@@ -6,8 +7,11 @@ from nltk.stem import PorterStemmer
 def read_and_clean_data(filename):
 
     data = read_from_csv(filename)
+    data = removeMentions(data)
+    data = removeNonLetters(data)
     data = remove_stop_words(data)
     data = stem(data)
+    data = removeNonLetters(data)
 
     return data
 
@@ -55,5 +59,19 @@ def stem(data):
 
     data['tweet'] = data['tweet'].apply(
         lambda x: ' '.join([ps.stem(word) for word in x.split()]))
+
+    return data
+
+def removeMentions(data):
+    data['tweet'] = [re.sub(r'@[A-Za-z0-9_;&,.#]+', '', tweet) for tweet in data['tweet']]
+    data['tweet'] = [re.sub(r'@+', '', tweet) for tweet in data['tweet']]
+    data['tweet'] = [re.sub('https?://[A-Za-z0-9./]+', '', tweet) for tweet in data['tweet']]
+    data['tweet'] = [re.sub('www?[A-Za-z0-9./]+', '', tweet) for tweet in data['tweet']]
+
+    return data
+
+def removeNonLetters(data):
+    data['tweet'] = [re.sub("[^a-zA-Z]", " ", tweet) for tweet in data['tweet']]
+    data['tweet'] = [re.sub(' +', ' ', tweet) for tweet in data['tweet']]
 
     return data
