@@ -75,3 +75,8 @@ def removeNonLetters(data):
     data['tweet'] = [re.sub(' +', ' ', tweet) for tweet in data['tweet']]
 
     return data
+
+def removespaces(data):
+    data['tweet'] = [re.sub(" ", "", tweet) for tweet in data['tweet']]
+
+    return data
