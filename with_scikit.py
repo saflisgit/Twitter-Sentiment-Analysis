@@ -1,23 +1,56 @@
 import readData as rd
-from sklearn.feature_extraction.text import CountVectorizer
+import numpy as np
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score
+
+clf = GaussianNB()
 
 data = rd.read_and_clean_data('train_short.csv')
-#data = rd.removespaces(data)
 
-#rd.print_head_and_tail(data)
+total_tweets = data.shape[0]
+trainIndex, testIndex = list(), list()
+for i in range(total_tweets):
+    if np.random.uniform(0, 1) < 0.75:
+        trainIndex += [i]
+    else:
+        testIndex += [i]
+trainData = data.loc[trainIndex]
+testData = data.loc[testIndex]
 
-sample = [data['tweet'][3], data['tweet'][5]]
+trainData.reset_index(inplace=True)
+trainData.drop(['index'], axis=1, inplace=True)
 
-print(sample)
+testData.reset_index(inplace=True)
+testData.drop(['index'], axis=1, inplace=True)
 
-gram = list()
+train_corpus = trainData['tweet'].tolist()
+test_corpus = trainData['tweet'].tolist()
 
-vectorizer = CountVectorizer(ngram_range=(1, 4))
+#print(train_corpus)
 
-x = vectorizer.fit_transform(sample)
+train_corpus_target = trainData['Sentiment'].tolist()
+testLabels = testData['Sentiment'].tolist()
+print(testLabels)
 
-print(vectorizer.get_feature_names())
+vectorizer = TfidfVectorizer(ngram_range=(2,2), min_df=1, use_idf=True, smooth_idf=True)
 
-print(x.toarray())
+# Vectorize the training data
+X_train = vectorizer.fit_transform(train_corpus)
+
+# Vectorize the testing data
+X_test = vectorizer.transform(test_corpus)
+
+#print(X_test)
+
+# Train the SVM, optimized by Stochastic Gradient Descent
+clf.fit(X_train.toarray(), train_corpus_target) # train_corpus_target is the correct values for each training data.
+
+# Make predictions
+pred = clf.predict(X_test.toarray())
+print(pred)
+
+print('accuracy : ', accuracy_score(testLabels, pred))
+
 
 
