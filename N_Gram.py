@@ -2,6 +2,7 @@ from nltk.tokenize import word_tokenize
 import readData as rd
 import numpy as np
 import math
+import csv
 
 
 class N_Gram(object):
@@ -24,6 +25,8 @@ class N_Gram(object):
         print('POSITIVE: ', self.pos_tweets, ' NEGATIVE: ', self.neg_tweets)
 
         self.calc_PBA()
+
+        return self.PBA_pos, self.PBA_neg, self.pos_tweets, self.neg_tweets
 
 # ========================================================================================
 
@@ -97,12 +100,10 @@ def metrics(labels, predictions):
         false_pos += int(labels[i] == 0 and predictions[i] == 4)
         false_neg += int(labels[i] == 4 and predictions[i] == 0)
 
-    """
     print(true_pos)
     print(true_neg)
     print(false_pos)
     print(false_neg)
-    """
 
     try:
         precision = true_pos / (true_pos + false_pos)
@@ -164,8 +165,8 @@ def metrics2(labels, predictions):
 filename = 'train60k.csv'
 
 data = rd.read_and_clean_data(filename)
-#test_data = rd.read_and_clean_data('test2.csv')
 
+# testData = rd.read_and_clean_data('test2.csv')
 
 total_tweets = data.shape[0]
 trainIndex, testIndex = list(), list()
@@ -184,7 +185,18 @@ testData.reset_index(inplace=True)
 testData.drop(['index'], axis=1, inplace=True)
 
 naive_data = N_Gram(data)
-naive_data.train()
+PBA_pos, PBA_neg, pos_tweets, neg_tweets = naive_data.train()
+print(type(PBA_pos))
+tweets_file = open('counts.txt', 'w')
+tweets_file.write((str(pos_tweets) + '\n'))
+tweets_file.write((str(neg_tweets) + '\n'))
+
+with open('PBAs.csv', 'w') as PBA_file:
+    w = csv.writer(PBA_file, lineterminator='\n')
+    w.writerows(PBA_pos.items())
+    w.writerow('$')
+    w.writerows(PBA_neg.items())
+
 preds = naive_data.predict(testData['tweet'])
 print(testData['Sentiment'])
 print(preds)
