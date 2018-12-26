@@ -1,12 +1,12 @@
 from nltk.tokenize import word_tokenize
 import readData as rd
 import numpy as np
-import math
-
+import csv
+import userInterface as ui
 
 class NaiveBayes(object):
 
-    def __init__(self, traindata):
+    def __init__(self, traindata, obj_ui):
         self.tweets, self.labels = traindata['tweet'], traindata['Sentiment']
 
         self.pos_tweets, self.neg_tweets = self.labels.value_counts()[4], self.labels.value_counts()[0]
@@ -18,12 +18,16 @@ class NaiveBayes(object):
         self.PA_pos = self.pos_tweets / self.total_tweets
         self.PA_neg = self.neg_tweets / self.total_tweets
 
+        self.ui = obj_ui
+
 # ========================================================================================
 
     def train(self):
         print('POSITIVE: ', self.pos_tweets, ' NEGATIVE: ', self.neg_tweets)
 
         self.calc_PBA()
+
+        return self.PBA_pos, self.PBA_neg, self.pos_tweets, self.neg_tweets
 
 # ========================================================================================
 
@@ -58,18 +62,12 @@ class NaiveBayes(object):
         p_pos *= self.PA_pos
         p_neg *= self.PA_neg
 
-        #print('Tweet:', tweet, '====> pos/neg: ', p_pos/p_neg, '\t--->', (p_pos >= p_neg))
+        messsage = 'Tweet:' + tweet + '====> pos/neg: ' + str(p_pos/p_neg) + '\t--->' + str(p_pos >= p_neg)
+        self.ui.insert_msg_box(messsage)
 
-        pn_ratio = (p_pos) / (p_neg)
-
-        if pn_ratio > 1.4:
-            print('Tweet:', tweet, '====> ', pn_ratio, ' ====> 4')
+        if p_pos > p_neg:
             return 4
-        elif pn_ratio > 0.55:
-            print('Tweet:', tweet, '====> ', pn_ratio, ' ====> 2')
-            return 2
         else:
-            print('Tweet:', tweet, '====> ', pn_ratio, ' ====> 0')
             return 0
 
 # ========================================================================================
@@ -85,7 +83,7 @@ class NaiveBayes(object):
 
 # ========================================================================================
 
-def metrics(labels, predictions):
+def metrics(labels, predictions, obj_ui):
     true_pos, true_neg, false_pos, false_neg = 0, 0, 0, 0
 
     for i in range(len(labels)):
@@ -104,8 +102,6 @@ def metrics(labels, predictions):
     try:
         precision = true_pos / (true_pos + false_pos)
         recall = true_pos / (true_pos + false_neg)
-        print('Precall')
-        print(precision, ',', recall)
         fscore = 2 * precision * recall / (precision + recall)
         accuracy = (true_pos + true_neg) / (true_pos + true_neg + false_pos + false_neg)
 
@@ -117,73 +113,48 @@ def metrics(labels, predictions):
     print("F-score: ", fscore)
     print("Accuracy: ", accuracy)
 
-def metrics2(labels, predictions):
-    true = 0
-    false = 0
+    obj_ui.clean_msg_box()
+    obj_ui.insert_msg_box('\nPrecision: ' + str(precision))
+    obj_ui.insert_msg_box("\nRecall: " + str(recall))
+    obj_ui.insert_msg_box("\nF-Score: " + str(fscore))
+    obj_ui.insert_msg_box("\nAccuracy: " + str(accuracy))
 
-    true_pos = 0
-    true_ntr = 0
-    true_neg = 0
-    false_pos = 0
-    false_ntr = 0
-    false_neg = 0
+def train_naive(train_data, model, obj_ui):
 
-    for i in range(len(labels)):
-        if labels[i] == predictions[i]:
-            if labels[i] == 4:
-                true_pos += 1
-            elif labels[i] == 2:
-                true_ntr += 1
-            else:
-                true_neg += 1
+    filename = train_data + '.csv'
+    counts = model + '.txt'
+    model = model + '.csv'
+
+    data = rd.read_and_clean_data(filename)
+
+    total_tweets = data.shape[0]
+    trainIndex, testIndex = list(), list()
+    for i in range(total_tweets):
+        if np.random.uniform(0, 1) < 0.9:
+            trainIndex += [i]
         else:
-            if labels[i] == 4:
-                false_pos += 1
-            elif labels[i] == 2:
-                false_ntr += 1
-            else:
-                false_neg += 1
+            testIndex += [i]
+    trainData = data.loc[trainIndex]
+    test_data = data.loc[testIndex]
 
-    true = true_pos + true_ntr + true_neg
-    false = false_neg + false_pos + false_ntr
+    trainData.reset_index(inplace=True)
+    trainData.drop(['index'], axis=1, inplace=True)
 
-    accuracy = true / (true + false)
+    test_data.reset_index(inplace=True)
+    test_data.drop(['index'], axis=1, inplace=True)
 
+    naive_data = NaiveBayes(data, obj_ui)
+    PBA_pos, PBA_neg, pos_tweets, neg_tweets = naive_data.train()
 
-    print('Accuracy : ', accuracy)
-    print('Pos Accuracy : ', true_pos / (true_pos + false_pos))
-    print('Ntr Accuracy : ', true_ntr / (true_ntr + false_ntr))
-    print('Neg Accuracy : ', true_neg / (true_neg + false_neg))
-    print('Total pos : ', true_pos + false_pos)
-    print('Total ntr : ', true_ntr + false_ntr)
-    print('Total neg : ', true_neg + false_neg)
+    tweets_file = open(counts, 'w')
+    tweets_file.write((str(pos_tweets) + '\n'))
+    tweets_file.write((str(neg_tweets) + '\n'))
 
-filename = 'train60k.csv'
+    with open(model, 'w') as PBA_file:
+        w = csv.writer(PBA_file, lineterminator='\n')
+        w.writerows(PBA_pos.items())
+        w.writerow('$')
+        w.writerows(PBA_neg.items())
 
-data = rd.read_and_clean_data(filename)
-test_data = rd.read_and_clean_data('test2.csv')
-
-"""
-total_tweets = data.shape[0]
-trainIndex, testIndex = list(), list()
-for i in range(total_tweets):
-    if np.random.uniform(0, 1) < 0.75:
-        trainIndex += [i]
-    else:
-        testIndex += [i]
-trainData = data.loc[trainIndex]
-testData = data.loc[testIndex]
-
-trainData.reset_index(inplace=True)
-trainData.drop(['index'], axis=1, inplace=True)
-
-testData.reset_index(inplace=True)
-testData.drop(['index'], axis=1, inplace=True)
-"""
-
-naive_data = NaiveBayes(data)
-naive_data.train()
-preds = naive_data.predict(test_data['tweet'])
-print(test_data['Sentiment'])
-print(preds)
-metrics2(test_data['Sentiment'], preds)
+    preds = naive_data.predict(test_data['tweet'])
+    metrics(test_data['Sentiment'], preds, obj_ui)

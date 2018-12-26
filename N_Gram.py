@@ -1,7 +1,6 @@
 from nltk.tokenize import word_tokenize
 import readData as rd
 import numpy as np
-import math
 import csv
 
 
@@ -153,7 +152,6 @@ def metrics2(labels, predictions):
 
     accuracy = true / (true + false)
 
-
     print('Accuracy : ', accuracy)
     print('Pos Accuracy : ', true_pos / (true_pos + false_pos))
     print('Ntr Accuracy : ', true_ntr / (true_ntr + false_ntr))
@@ -163,41 +161,40 @@ def metrics2(labels, predictions):
     print('Total neg : ', true_neg + false_neg)
 
 
-filename = 'train1500k.csv'
+def train_ngram(filename, outputfilename):
+    filename = filename + '.csv'
+    count_txt = outputfilename + '.txt'
+    model_csv = outputfilename + '.csv'
+    data = rd.read_and_clean_data(filename)
 
-data = rd.read_and_clean_data(filename)
+    total_tweets = data.shape[0]
+    trainIndex, testIndex = list(), list()
+    for i in range(total_tweets):
+        if np.random.uniform(0, 1) < 0.9:
+            trainIndex += [i]
+        else:
+            testIndex += [i]
+    trainData = data.loc[trainIndex]
+    testData = data.loc[testIndex]
 
-# testData = rd.read_and_clean_data('test2.csv')
+    trainData.reset_index(inplace=True)
+    trainData.drop(['index'], axis=1, inplace=True)
 
-total_tweets = data.shape[0]
-trainIndex, testIndex = list(), list()
-for i in range(total_tweets):
-    if np.random.uniform(0, 1) < 0.9:
-        trainIndex += [i]
-    else:
-        testIndex += [i]
-trainData = data.loc[trainIndex]
-testData = data.loc[testIndex]
+    testData.reset_index(inplace=True)
+    testData.drop(['index'], axis=1, inplace=True)
 
-trainData.reset_index(inplace=True)
-trainData.drop(['index'], axis=1, inplace=True)
+    ngram = N_Gram(data)
+    PBA_pos, PBA_neg, pos_tweets, neg_tweets = ngram.train()
 
-testData.reset_index(inplace=True)
-testData.drop(['index'], axis=1, inplace=True)
+    tweets_file = open(count_txt, 'w')
+    tweets_file.write((str(pos_tweets) + '\n'))
+    tweets_file.write((str(neg_tweets) + '\n'))
 
-naive_data = N_Gram(data)
-PBA_pos, PBA_neg, pos_tweets, neg_tweets = naive_data.train()
-print(type(PBA_pos))
-tweets_file = open('1500k_counts.txt', 'w')
-tweets_file.write((str(pos_tweets) + '\n'))
-tweets_file.write((str(neg_tweets) + '\n'))
+    with open(model_csv, 'w') as PBA_file:
+        w = csv.writer(PBA_file, lineterminator='\n')
+        w.writerows(PBA_pos.items())
+        w.writerow('$')
+        w.writerows(PBA_neg.items())
 
-with open('1500k_trained.csv', 'w') as PBA_file:
-    w = csv.writer(PBA_file, lineterminator='\n')
-    w.writerows(PBA_pos.items())
-    w.writerow('$')
-    w.writerows(PBA_neg.items())
-preds = naive_data.predict(testData['tweet'])
-print(testData['Sentiment'])
-print(preds)
-metrics(testData['Sentiment'], preds)
+    preds = ngram.predict(testData['tweet'])
+    metrics(testData['Sentiment'], preds)

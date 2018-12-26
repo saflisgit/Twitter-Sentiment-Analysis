@@ -86,3 +86,17 @@ def tolower(data):
     data['tweet'] = [tweet.lower() for tweet in data['tweet']]
 
     return data
+
+def read_and_clean_sentence (sentence) :
+    sentence = re.sub(r'@[A-Za-z0-9_;&,.#]+', '', sentence)
+    sentence = re.sub(r'@+', '', sentence)
+    sentence = re.sub('https?://[A-Za-z0-9./]+', '', sentence)
+    sentence = re.sub('www?[A-Za-z0-9./]+', '', sentence)
+    sentence = re.sub("[^a-zA-Z]", " ", sentence)
+    sentence = re.sub(' +', ' ', sentence)
+    ps = PorterStemmer()
+    stop = stopwords.words('english')
+    sentence =' '.join([word for word in sentence.split() if word not in stop])
+    sentence =' '.join([ps.stem(word) for word in sentence.split() ])
+
+    return sentence
