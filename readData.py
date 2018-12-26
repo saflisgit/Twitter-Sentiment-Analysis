@@ -7,6 +7,7 @@ from nltk.stem import PorterStemmer
 def read_and_clean_data(filename):
 
     data = read_from_csv(filename)
+    data = tolower(data)
     data = removeMentions(data)
     data = removeNonLetters(data)
     data = remove_stop_words(data)
@@ -78,5 +79,10 @@ def removeNonLetters(data):
 
 def removespaces(data):
     data['tweet'] = [re.sub(" ", "", tweet) for tweet in data['tweet']]
+
+    return data
+
+def tolower(data):
+    data['tweet'] = [tweet.lower() for tweet in data['tweet']]
 
     return data

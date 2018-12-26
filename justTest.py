@@ -108,7 +108,7 @@ def metrics(labels, predictions):
     print("F-score: ", fscore)
     print("Accuracy: ", accuracy)
 
-filename = 'test2.csv'
+filename = 'test100k_shuffled.csv'
 
 testData = rd.read_and_clean_data(filename)
 
@@ -128,7 +128,7 @@ trainData.drop(['index'], axis=1, inplace=True)
 testData.reset_index(inplace=True)
 testData.drop(['index'], axis=1, inplace=True)"""
 
-test = justTest('counts.txt', 'PBAs.csv')
+test = justTest('1500k_counts.txt', '1500k_trained.csv')
 
 print(test.PBA_pos)
 

@@ -162,7 +162,8 @@ def metrics2(labels, predictions):
     print('Total ntr : ', true_ntr + false_ntr)
     print('Total neg : ', true_neg + false_neg)
 
-filename = 'train60k.csv'
+
+filename = 'train1500k.csv'
 
 data = rd.read_and_clean_data(filename)
 
@@ -171,7 +172,7 @@ data = rd.read_and_clean_data(filename)
 total_tweets = data.shape[0]
 trainIndex, testIndex = list(), list()
 for i in range(total_tweets):
-    if np.random.uniform(0, 1) < 0.75:
+    if np.random.uniform(0, 1) < 0.9:
         trainIndex += [i]
     else:
         testIndex += [i]
@@ -187,16 +188,15 @@ testData.drop(['index'], axis=1, inplace=True)
 naive_data = N_Gram(data)
 PBA_pos, PBA_neg, pos_tweets, neg_tweets = naive_data.train()
 print(type(PBA_pos))
-tweets_file = open('counts.txt', 'w')
+tweets_file = open('1500k_counts.txt', 'w')
 tweets_file.write((str(pos_tweets) + '\n'))
 tweets_file.write((str(neg_tweets) + '\n'))
 
-with open('PBAs.csv', 'w') as PBA_file:
+with open('1500k_trained.csv', 'w') as PBA_file:
     w = csv.writer(PBA_file, lineterminator='\n')
     w.writerows(PBA_pos.items())
     w.writerow('$')
     w.writerows(PBA_neg.items())
-
 preds = naive_data.predict(testData['tweet'])
 print(testData['Sentiment'])
 print(preds)
