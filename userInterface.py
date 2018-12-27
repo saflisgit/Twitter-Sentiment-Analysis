@@ -52,44 +52,44 @@ def destroy_tweet_analyze():
 
 class tweet_analyze:
 
-    def clean_msg_box (self) :
+    def clean_msg_box(self):
         self.list_msg.delete(0, tk.END)
 
-    def insert_msg_box (self,sentence) :
+    def insert_msg_box(self,sentence):
         sentence = self.remove_emoji(sentence)
         self.list_msg.insert(tk.END, sentence)
 
     def test_NB(self):
         file_name = self.txt_testFile.get()
-        jtnb.test('model', file_name)
+        jtnb.test('modelNB', file_name, self)
 
     def test_NG(self):
         file_name = self.txt_testFile.get()
-        jtng.test('model', file_name)
+        jtng.test('modelNG', file_name, self)
 
     def sentence_analyze(self):
         sentence = self.txt_sentence.get()
         self.list_msg.delete(0, tk.END)
         clean_sentence = rd.read_and_clean_sentence(sentence)
-        labelNB = jtnb.predict_sentence('model.txt', 'model.csv', clean_sentence)
-        labelNG = jtng.predict_sentence('model.txt', 'model.csv', clean_sentence)
-        sentence +=' NB---> ' + labelNB
+        labelNB = jtnb.predict_sentence('model.txt', 'modelNB.csv', clean_sentence, self)
+        labelNG = jtng.predict_sentence('model.txt', 'modelNG.csv', clean_sentence, self)
+        sentence += ' NB---> ' + labelNB
         sentence += ' NG---> ' + labelNG
         self.list_msg.insert(tk.END, sentence)
 
     def tweet_analyze (self) :
         tweets = self.list_msg.get(0, tk.END)
         self.list_msg.delete(0, tk.END)
-        for index,tweet in enumerate(tweets) :
+        for index,tweet in enumerate(tweets):
             clean_tweet = rd.read_and_clean_sentence(tweet)
-            labelNB = jtnb.predict_sentence('model.txt', 'model.csv', clean_tweet)
-            labelNG = jtng.predict_sentence('model.txt', 'model.csv', clean_tweet)
+            labelNB = jtnb.predict_sentence('model.txt', 'modelNB.csv', clean_tweet)
+            labelNG = jtng.predict_sentence('model.txt', 'modelNG.csv', clean_tweet)
 
             element = tweets[index] + 'NB--->' + labelNB
             element = element + 'NG--->' + labelNG
             self.list_msg.insert(tk.END, element)
 
-    def remove_emoji(self,text):
+    def remove_emoji(self, text):
         returnString = ""
         for character in text:
             try:
@@ -99,14 +99,13 @@ class tweet_analyze:
                 returnString += ''
         return returnString
 
-
     def read_and_trainNB(self):
         file_name = self.txt_file.get()
-        nb.train_naive(file_name, 'model', self)
+        nb.train_naive(file_name, 'modelNB', self)
 
     def read_and_trainNG(self):
         file_name = self.txt_file.get()
-        nb.train_naive(file_name, 'model')
+        ng.train_ngram(file_name, 'modelNG', self)
 
     def get_tweets(self):
         userID = self.txt_userID.get()

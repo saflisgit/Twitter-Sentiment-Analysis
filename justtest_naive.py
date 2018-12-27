@@ -5,7 +5,7 @@ import readData as rd
 
 class justtest_naive(object):
 
-    def __init__(self, count_filename, PBA_filename):
+    def __init__(self, count_filename, PBA_filename, obj_ui):
 
         count_file = open(count_filename, 'r')
 
@@ -21,6 +21,8 @@ class justtest_naive(object):
 
         self.PBA_pos = dict()
         self.PBA_neg = dict()
+
+        self.ui = obj_ui
 
         readPos = True
 
@@ -48,11 +50,15 @@ class justtest_naive(object):
         p_pos *= self.PA_pos
         p_neg *= self.PA_neg
 
-        print('Tweet:', tweet, '====> pos/neg: ', p_pos/p_neg, '\t--->', (p_pos >= p_neg))
+        #print('Tweet:', tweet, '====> pos/neg: ', p_pos/p_neg, '\t--->', (p_pos >= p_neg))
 
-        if p_pos > p_neg:
+        if p_pos >= p_neg:
+            messsage = 'Tweet:' + tweet + '====> pos/neg: ' + str(p_pos / p_neg) + '\t--->' + 'Positive'
+            self.ui.insert_msg_box(messsage)
             return 4
         else:
+            messsage = 'Tweet:' + tweet + '====> pos/neg: ' + str(p_pos / p_neg) + '\t--->' + 'Negative'
+            self.ui.insert_msg_box(messsage)
             return 0
 
     # ========================================================================================
@@ -68,7 +74,7 @@ class justtest_naive(object):
 
 # ========================================================================================
 
-def metrics(labels, predictions):
+def metrics(labels, predictions, obj_ui):
     true_pos, true_neg, false_pos, false_neg = 0, 0, 0, 0
 
     for i in range(len(labels)):
@@ -98,22 +104,28 @@ def metrics(labels, predictions):
     print("F-score: ", fscore)
     print("Accuracy: ", accuracy)
 
+    obj_ui.clean_msg_box()
+    obj_ui.insert_msg_box('\nPrecision: ' + str(precision))
+    obj_ui.insert_msg_box("\nRecall: " + str(recall))
+    obj_ui.insert_msg_box("\nF-Score: " + str(fscore))
+    obj_ui.insert_msg_box("\nAccuracy: " + str(accuracy))
 
-def test(model, test_data):
+
+def test(model, test_data, obj_ui):
     counts_txt = model + '.txt'
     model_csv = model + '.csv'
     test_data = test_data + '.csv'
 
     testData = rd.read_and_clean_data(test_data)
 
-    new_test = justtest_naive(counts_txt, model_csv)
+    new_test = justtest_naive(counts_txt, model_csv, obj_ui)
 
     preds = new_test.predict(testData['tweet'])
-    metrics(testData['Sentiment'], preds)
+    metrics(testData['Sentiment'], preds, obj_ui)
 
 
-def predict_sentence(counts, model, sentence):
-    new_test = justtest_naive(counts, model)
+def predict_sentence(counts, model, sentence, obj_ui):
+    new_test = justtest_naive(counts, model, obj_ui)
 
     pred = new_test.classify(sentence)
 

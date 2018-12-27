@@ -2,7 +2,6 @@ from nltk.tokenize import word_tokenize
 import readData as rd
 import numpy as np
 import csv
-import userInterface as ui
 
 class NaiveBayes(object):
 
@@ -62,12 +61,16 @@ class NaiveBayes(object):
         p_pos *= self.PA_pos
         p_neg *= self.PA_neg
 
-        messsage = 'Tweet:' + tweet + '====> pos/neg: ' + str(p_pos/p_neg) + '\t--->' + str(p_pos >= p_neg)
-        self.ui.insert_msg_box(messsage)
+        # messsage = 'Tweet:' + tweet + '====> pos/neg: ' + str(p_pos/p_neg) + '\t--->' + str(p_pos >= p_neg)
+        # self.ui.insert_msg_box(messsage)
 
-        if p_pos > p_neg:
+        if p_pos >= p_neg:
+            messsage = 'Tweet:' + tweet + '====> pos/neg: ' + str(p_pos / p_neg) + '\t--->' + 'Positive'
+            self.ui.insert_msg_box(messsage)
             return 4
         else:
+            messsage = 'Tweet:' + tweet + '====> pos/neg: ' + str(p_pos / p_neg) + '\t--->' + 'Negative'
+            self.ui.insert_msg_box(messsage)
             return 0
 
 # ========================================================================================

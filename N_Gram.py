@@ -6,7 +6,7 @@ import csv
 
 class N_Gram(object):
 
-    def __init__(self, traindata):
+    def __init__(self, traindata, obj_ui):
         self.tweets, self.labels = traindata['tweet'], traindata['Sentiment']
 
         self.pos_tweets, self.neg_tweets = self.labels.value_counts()[4], self.labels.value_counts()[0]
@@ -17,6 +17,8 @@ class N_Gram(object):
 
         self.PA_pos = self.pos_tweets / self.total_tweets
         self.PA_neg = self.neg_tweets / self.total_tweets
+
+        self.ui = obj_ui
 
 # ========================================================================================
 
@@ -70,11 +72,16 @@ class N_Gram(object):
         p_pos *= self.PA_pos
         p_neg *= self.PA_neg
 
-        print('Tweet:', tweet, '====> pos/neg: ', p_pos/p_neg, '\t--->', (p_pos >= p_neg))
+        # messsage = 'Tweet:' + tweet + '====> pos/neg: ' + str(p_pos / p_neg) + '\t--->' + str(p_pos >= p_neg)
+        # self.ui.insert_msg_box(messsage)
 
-        if p_pos > p_neg:
+        if p_pos >= p_neg:
+            messsage = 'Tweet:' + tweet + '====> pos/neg: ' + str(p_pos / p_neg) + '\t--->' + 'Positive'
+            self.ui.insert_msg_box(messsage)
             return 4
         else:
+            messsage = 'Tweet:' + tweet + '====> pos/neg: ' + str(p_pos / p_neg) + '\t--->' + 'Negative'
+            self.ui.insert_msg_box(messsage)
             return 0
 
 # ========================================================================================
@@ -90,7 +97,7 @@ class N_Gram(object):
 
 # ========================================================================================
 
-def metrics(labels, predictions):
+def metrics(labels, predictions, obj_ui):
     true_pos, true_neg, false_pos, false_neg = 0, 0, 0, 0
 
     for i in range(len(labels)):
@@ -120,48 +127,13 @@ def metrics(labels, predictions):
     print("F-score: ", fscore)
     print("Accuracy: ", accuracy)
 
-def metrics2(labels, predictions):
-    true = 0
-    false = 0
+    obj_ui.clean_msg_box()
+    obj_ui.insert_msg_box('\nPrecision: ' + str(precision))
+    obj_ui.insert_msg_box("\nRecall: " + str(recall))
+    obj_ui.insert_msg_box("\nF-Score: " + str(fscore))
+    obj_ui.insert_msg_box("\nAccuracy: " + str(accuracy))
 
-    true_pos = 0
-    true_ntr = 0
-    true_neg = 0
-    false_pos = 0
-    false_ntr = 0
-    false_neg = 0
-
-    for i in range(len(labels)):
-        if labels[i] == predictions[i]:
-            if labels[i] == 4:
-                true_pos += 1
-            elif labels[i] == 2:
-                true_ntr += 1
-            else:
-                true_neg += 1
-        else:
-            if labels[i] == 4:
-                false_pos += 1
-            elif labels[i] == 2:
-                false_ntr += 1
-            else:
-                false_neg += 1
-
-    true = true_pos + true_ntr + true_neg
-    false = false_neg + false_pos + false_ntr
-
-    accuracy = true / (true + false)
-
-    print('Accuracy : ', accuracy)
-    print('Pos Accuracy : ', true_pos / (true_pos + false_pos))
-    print('Ntr Accuracy : ', true_ntr / (true_ntr + false_ntr))
-    print('Neg Accuracy : ', true_neg / (true_neg + false_neg))
-    print('Total pos : ', true_pos + false_pos)
-    print('Total ntr : ', true_ntr + false_ntr)
-    print('Total neg : ', true_neg + false_neg)
-
-
-def train_ngram(filename, outputfilename):
+def train_ngram(filename, outputfilename, obj_ui):
     filename = filename + '.csv'
     count_txt = outputfilename + '.txt'
     model_csv = outputfilename + '.csv'
@@ -183,7 +155,7 @@ def train_ngram(filename, outputfilename):
     testData.reset_index(inplace=True)
     testData.drop(['index'], axis=1, inplace=True)
 
-    ngram = N_Gram(data)
+    ngram = N_Gram(data, obj_ui)
     PBA_pos, PBA_neg, pos_tweets, neg_tweets = ngram.train()
 
     tweets_file = open(count_txt, 'w')
@@ -197,4 +169,4 @@ def train_ngram(filename, outputfilename):
         w.writerows(PBA_neg.items())
 
     preds = ngram.predict(testData['tweet'])
-    metrics(testData['Sentiment'], preds)
+    metrics(testData['Sentiment'], preds, obj_ui)
